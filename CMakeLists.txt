@@ -7,7 +7,9 @@ if(NOT DEFINED PICO_SDK_PATH)
     message(STATUS "PICO_SDK_PATH = ${PICO_SDK_PATH}")
 endif()
 
+include(rp2040_hat_freertos_c-patch.cmake)
 include(pico_sdk_import.cmake)
+include(rp2040_hat_freertos_c_sdk_version.cmake)
 
 # Set project name
 set(PROJECT_NAME RP2040-HAT-FREERTOS-C)
@@ -34,9 +36,9 @@ if(NOT DEFINED WIZNET_DIR)
     message(STATUS "WIZNET_DIR = ${WIZNET_DIR}")
 endif()
 
-if(NOT DEFINED MBEDTLS_LIB_DIR)
-    set(MBEDTLS_LIB_DIR ${CMAKE_SOURCE_DIR}/libraries/mbedtls)
-    message(STATUS "MBEDTLS_LIB_DIR = ${MBEDTLS_LIB_DIR}")
+if(NOT DEFINED MBEDTLS_DIR)
+    set(MBEDTLS_DIR ${CMAKE_SOURCE_DIR}/libraries/mbedtls)
+    message(STATUS "MBEDTLS_DIR = ${MBEDTLS_DIR}")
 endif()
 
 if(NOT DEFINED PORT_DIR)
@@ -55,7 +57,8 @@ add_subdirectory(examples)
 
 # Add libraries in subdirectories
 add_subdirectory(${CMAKE_SOURCE_DIR}/libraries)
-add_subdirectory(${MBEDTLS_LIB_DIR})
+#add_subdirectory(${FREERTOS_DIR})
+add_subdirectory(${MBEDTLS_DIR})
 add_subdirectory(${PORT_DIR})
 
 # Set compile options

@@ -223,8 +223,8 @@ target_sources(FREERTOS_FILES PUBLIC
         ${FREERTOS_DIR}/stream_buffer.c
         ${FREERTOS_DIR}/tasks.c
         ${FREERTOS_DIR}/timers.c
+        ${FREERTOS_DIR}/portable/GCC/ARM_CM0/port.c  		
         ${FREERTOS_DIR}/portable/MemMang/heap_4.c
-        ${FREERTOS_DIR}/portable/GCC/ARM_CM0/port.c
 )
 
 target_include_directories(FREERTOS_FILES PUBLIC

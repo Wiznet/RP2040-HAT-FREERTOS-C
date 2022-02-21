@@ -1,0 +1,15 @@
+[submodule "libraries/mbedtls"]
+	path = libraries/mbedtls
+	url = https://github.com/ARMmbed/mbedtls.git
+[submodule "libraries/ioLibrary_Driver"]
+	path = libraries/ioLibrary_Driver
+	url = https://github.com/Wiznet/ioLibrary_Driver.git
+[submodule "libraries/pico-sdk"]
+	path = libraries/pico-sdk
+	url = https://github.com/raspberrypi/pico-sdk.git
+[submodule "libraries/pico-extras"]
+	path = libraries/pico-extras
+	url = https://github.com/raspberrypi/pico-extras.git
+[submodule "libraries/FreeRTOS-Kernel"]
+	path = libraries/FreeRTOS-Kernel
+	url = https://github.com/FreeRTOS/FreeRTOS-Kernel.git

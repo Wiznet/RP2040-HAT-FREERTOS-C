@@ -1,17 +1,21 @@
 /**
- * Copyright (c) 2021 WIZnet Co.,Ltd
+ * Copyright (c) 2022 WIZnet Co.,Ltd
  *
  * SPDX-License-Identifier: BSD-3-Clause
  */
 
 /**
-  * ----------------------------------------------------------------------------------------------------
-  * Includes
-  * ----------------------------------------------------------------------------------------------------
-  */
+ * ----------------------------------------------------------------------------------------------------
+ * Includes
+ * ----------------------------------------------------------------------------------------------------
+ */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <FreeRTOS.h>
+#include <task.h>
+#include <semphr.h>
 
 #include "port_common.h"
 
@@ -28,18 +32,21 @@
 #include "mbedtls/ctr_drbg.h"
 #include "mbedtls/compat-1.3.h"
 
-#include <FreeRTOS.h>
-#include <task.h>
-#include <semphr.h>
-
 /**
-  * ----------------------------------------------------------------------------------------------------
-  * Macros
-  * ----------------------------------------------------------------------------------------------------
-  */
+ * ----------------------------------------------------------------------------------------------------
+ * Macros
+ * ----------------------------------------------------------------------------------------------------
+ */
+/* Task */
+#define TCP_TASK_STACK_SIZE 4096
+#define TCP_TASK_PRIORITY 7
+
+#define RECV_TASK_STACK_SIZE 256
+#define RECV_TASK_PRIORITY 6
+
 /* Clock */
 #define PLL_SYS_KHZ (133 * 1000)
- 
+
 /* Buffer */
 #define ETHERNET_BUF_MAX_SIZE (1024 * 2)
 
@@ -47,30 +54,20 @@
 #define SOCKET_SSL 2
 
 /* Port */
-#define PORT_SSL 7000
-
-/* RTOS */
-#define TCP_TASK_STACK_SIZE 4096
-#define TCP_TASK_PRIORITY 7
-
-#define RECV_TASK_STACK_SIZE 256
-#define RECV_TASK_PRIORITY 6
-
-#define TEST_TASK_STACK_SIZE 256
-#define TEST_TASK_PRIORITY 8
+#define PORT_SSL 443
 
 /**
-  * ----------------------------------------------------------------------------------------------------
-  * Variables
-  * ----------------------------------------------------------------------------------------------------
-  */
+ * ----------------------------------------------------------------------------------------------------
+ * Variables
+ * ----------------------------------------------------------------------------------------------------
+ */
 /* Network */
 static wiz_NetInfo g_net_info =
     {
         .mac = {0x00, 0x08, 0xDC, 0x12, 0x34, 0x56}, // MAC address
-        .ip = {192, 168, 2, 120},                     // IP address
+        .ip = {192, 168, 11, 2},                     // IP address
         .sn = {255, 255, 255, 0},                    // Subnet Mask
-        .gw = {192, 168, 2, 1},                     // Gateway
+        .gw = {192, 168, 11, 1},                     // Gateway
         .dns = {8, 8, 8, 8},                         // DNS server
         .dhcp = NETINFO_STATIC                       // DHCP enable/disable
 };
@@ -82,61 +79,56 @@ static uint8_t g_send_buf[ETHERNET_BUF_MAX_SIZE] = {
 static uint8_t g_recv_buf[ETHERNET_BUF_MAX_SIZE] = {
     0,
 };
-
-static uint8_t g_ssl_target_ip[4] = {192, 168, 2, 103};
+static uint8_t g_ssl_target_ip[4] = {192, 168, 11, 3};
 
 static mbedtls_ctr_drbg_context g_ctr_drbg;
 static mbedtls_ssl_config g_conf;
 static mbedtls_ssl_context g_ssl;
 
+/* Semaphore */
+static xSemaphoreHandle recv_sem = NULL;
+
 /* Timer  */
 static volatile uint32_t g_msec_cnt = 0;
 
-/* RTOS */
-xSemaphoreHandle recv_sema = NULL;
-
 /**
-  * ----------------------------------------------------------------------------------------------------
-  * Functions
-  * ----------------------------------------------------------------------------------------------------
-  */
+ * ----------------------------------------------------------------------------------------------------
+ * Functions
+ * ----------------------------------------------------------------------------------------------------
+ */
+/* Task */
+void tcp_task(void *argument);
+void recv_task(void *argument);
+
+void *pvPortCalloc(size_t sNb, size_t sSize);
+void pvPortFree(void *vPtr);
+
+/* Clock */
+static void set_clock_khz(void);
+
 /* SSL */
 static int wizchip_ssl_init(uint8_t *socket_fd);
 static int ssl_random_callback(void *p_rng, unsigned char *output, size_t output_len);
 
-/* Timer  */
-static void repeating_timer_callback(void);
-
 /* GPIO  */
 static void gpio_callback(void);
 
-/* RTOS */
-void *pvPortCalloc( size_t sNb, size_t sSize );
-void pvPortFree( void *vPtr );
-void tcp_task(void *argument);
-void recv_task(void *argument);
+/* Timer  */
+static void repeating_timer_callback(void);
+static time_t millis(void);
 
 /**
-  * ----------------------------------------------------------------------------------------------------
-  * Main
-  * ----------------------------------------------------------------------------------------------------
-  */
+ * ----------------------------------------------------------------------------------------------------
+ * Main
+ * ----------------------------------------------------------------------------------------------------
+ */
 int main()
 {
     /* Initialize */
-    // set a system clock frequency in khz
-    set_sys_clock_khz(PLL_SYS_KHZ, true);
-
-    // configure the specified clock
-    clock_configure(
-        clk_peri,
-        0,                                                // No glitchless mux
-        CLOCKS_CLK_PERI_CTRL_AUXSRC_VALUE_CLKSRC_PLL_SYS, // System PLL on AUX mux
-        PLL_SYS_KHZ * 1000,                               // Input frequency
-        PLL_SYS_KHZ * 1000                                // Output (must be same as no divider)
-    );
+    set_clock_khz();
 
     stdio_init_all();
+
     mbedtls_platform_set_calloc_free(pvPortCalloc, pvPortFree);
 
     wizchip_spi_initialize();
@@ -148,23 +140,219 @@ int main()
 
     wizchip_gpio_interrupt_initialize(SOCKET_SSL, gpio_callback);
     wizchip_1ms_timer_initialize(repeating_timer_callback);
-    
+
     xTaskCreate(tcp_task, "TCP_Task", TCP_TASK_STACK_SIZE, NULL, TCP_TASK_PRIORITY, NULL);
     xTaskCreate(recv_task, "RECV_Task", RECV_TASK_STACK_SIZE, NULL, RECV_TASK_PRIORITY, NULL);
-    recv_sema = xSemaphoreCreateCounting((unsigned portBASE_TYPE)0x7fffffff, (unsigned portBASE_TYPE)0);
+
+    recv_sem = xSemaphoreCreateCounting((unsigned portBASE_TYPE)0x7fffffff, (unsigned portBASE_TYPE)0);
+
     vTaskStartScheduler();
 
-    while(1)
+    while (1)
     {
-
+        ;
     }
 }
 
 /**
-  * ----------------------------------------------------------------------------------------------------
-  * Functions
-  * ----------------------------------------------------------------------------------------------------
-  */
+ * ----------------------------------------------------------------------------------------------------
+ * Functions
+ * ----------------------------------------------------------------------------------------------------
+ */
+/* Task */
+void tcp_task(void *argument)
+{
+    const int *list = NULL;
+    int retval = 0;
+    uint16_t len = 0;
+    uint32_t start_ms = 0;
+    uint32_t send_cnt = 0;
+
+    network_initialize(g_net_info);
+
+    /* Get network information */
+    print_network_information(g_net_info);
+
+    retval = wizchip_ssl_init(SOCKET_SSL);
+
+    if (retval < 0)
+    {
+        printf(" SSL initialize failed %d\n", retval);
+
+        while (1)
+        {
+            vTaskDelay(1000 * 1000);
+        }
+    }
+
+    /* Get ciphersuite information */
+    printf(" Supported ciphersuite lists\n");
+
+    list = mbedtls_ssl_list_ciphersuites();
+
+    while (*list)
+    {
+        printf(" %-42s\n", mbedtls_ssl_get_ciphersuite_name(*list));
+
+        list++;
+
+        if (!*list)
+        {
+            break;
+        }
+
+        printf(" %s\n", mbedtls_ssl_get_ciphersuite_name(*list));
+
+        list++;
+    }
+
+    retval = socket((uint8_t)(g_ssl.p_bio), Sn_MR_TCP, PORT_SSL, SF_TCP_NODELAY);
+
+    if (retval != SOCKET_SSL)
+    {
+        printf(" Socket failed %d\n", retval);
+
+        while (1)
+        {
+            vTaskDelay(1000 * 1000);
+        }
+    }
+
+    start_ms = millis();
+
+    do
+    {
+        retval = connect((uint8_t)(g_ssl.p_bio), g_ssl_target_ip, PORT_SSL);
+
+        if ((retval == SOCK_OK) || (retval == SOCKERR_TIMEOUT))
+        {
+            break;
+        }
+
+        vTaskDelay(1000);
+
+    } while ((millis() - start_ms) < RECV_TIMEOUT);
+
+    if ((retval != SOCK_OK) || (retval == SOCK_BUSY))
+    {
+        printf(" Connect failed %d\n", retval);
+
+        while (1)
+        {
+            vTaskDelay(1000 * 1000);
+        }
+    }
+
+    printf(" Connected %d\n", retval);
+
+    while ((retval = mbedtls_ssl_handshake(&g_ssl)) != 0)
+    {
+        if ((retval != MBEDTLS_ERR_SSL_WANT_READ) && (retval != MBEDTLS_ERR_SSL_WANT_WRITE))
+        {
+            printf(" failed\n  ! mbedtls_ssl_handshake returned -0x%x\n", -retval);
+
+            while (1)
+            {
+                vTaskDelay(1000 * 1000);
+            }
+        }
+    }
+
+    printf(" ok\n    [ Ciphersuite is %s ]\n", mbedtls_ssl_get_ciphersuite(&g_ssl));
+
+    while (1)
+    {
+        memset(g_send_buf, NULL, ETHERNET_BUF_MAX_SIZE);
+        sprintf(g_send_buf, "send data %d\r\n", send_cnt++);
+
+        retval = mbedtls_ssl_write(&g_ssl, g_send_buf, strlen(g_send_buf));
+
+        printf("send retval = %d\r\n", retval);
+
+        vTaskDelay(1000 * 3);
+    }
+}
+
+void recv_task(void *argument)
+{
+    uint8_t socket_num;
+    uint16_t reg_val;
+    uint16_t recv_len;
+
+    while (1)
+    {
+        xSemaphoreTake(recv_sem, portMAX_DELAY);
+        ctlwizchip(CW_GET_INTERRUPT, (void *)&reg_val);
+
+        reg_val &= 0x00FF;
+
+        for (socket_num = 0; socket_num < _WIZCHIP_SOCK_NUM_; socket_num++)
+        {
+            if (reg_val & (1 << socket_num))
+            {
+                break;
+            }
+        }
+
+        if (socket_num == SOCKET_SSL)
+        {
+            reg_val = (SIK_CONNECTED | SIK_DISCONNECTED | SIK_RECEIVED | SIK_TIMEOUT) & 0x00FF; // except sendok interrupt
+
+            ctlsocket(socket_num, CS_CLR_INTERRUPT, (void *)&reg_val);
+            getsockopt(socket_num, SO_RECVBUF, (void *)&recv_len);
+
+            if (recv_len > 0)
+            {
+                mbedtls_ssl_read(&g_ssl, g_recv_buf, (uint16_t)recv_len);
+
+                printf("%s\r\n", g_recv_buf);
+            }
+        }
+    }
+}
+
+void *pvPortCalloc(size_t sNb, size_t sSize)
+{
+    void *vPtr = NULL;
+
+    if (sSize > 0)
+    {
+        vPtr = pvPortMalloc(sSize * sNb); // Call FreeRTOS or other standard API
+
+        if (vPtr)
+        {
+            memset(vPtr, 0, (sSize * sNb)); // Must required
+        }
+    }
+
+    return vPtr;
+}
+
+void pvPortFree(void *vPtr)
+{
+    if (vPtr)
+    {
+        vPortFree(vPtr); // Call FreeRTOS or other standard API
+    }
+}
+
+/* Clock */
+static void set_clock_khz(void)
+{
+    // set a system clock frequency in khz
+    set_sys_clock_khz(PLL_SYS_KHZ, true);
+
+    // configure the specified clock
+    clock_configure(
+        clk_peri,
+        0,                                                // No glitchless mux
+        CLOCKS_CLK_PERI_CTRL_AUXSRC_VALUE_CLKSRC_PLL_SYS, // System PLL on AUX mux
+        PLL_SYS_KHZ * 1000,                               // Input frequency
+        PLL_SYS_KHZ * 1000                                // Output (must be same as no divider)
+    );
+}
+
+/* SSL */
 static int wizchip_ssl_init(uint8_t *socket_fd)
 {
     int retval;
@@ -179,6 +367,7 @@ static int wizchip_ssl_init(uint8_t *socket_fd)
                                               MBEDTLS_SSL_PRESET_DEFAULT)) != 0)
     {
         printf(" failed\n  ! mbedtls_ssl_config_defaults returned %d\n", retval);
+
         return -1;
     }
 
@@ -192,10 +381,12 @@ static int wizchip_ssl_init(uint8_t *socket_fd)
     if ((retval = mbedtls_ssl_setup(&g_ssl, &g_conf)) != 0)
     {
         printf(" failed\n  ! mbedtls_ssl_setup returned %d\n", retval);
+
         return -1;
     }
-    //mbedtls_ssl_set_bio(&g_ssl, socket_fd, send, recv, recv_timeout);
+
     mbedtls_ssl_set_bio(&g_ssl, socket_fd, send, recv, NULL);
+
     return 0;
 }
 
@@ -218,6 +409,15 @@ static int ssl_random_callback(void *p_rng, unsigned char *output, size_t output
     return 0;
 }
 
+/* GPIO */
+static void gpio_callback(void)
+{
+    signed portBASE_TYPE xHigherPriorityTaskWoken = pdFALSE;
+
+    xSemaphoreGiveFromISR(recv_sem, &xHigherPriorityTaskWoken);
+    portEND_SWITCHING_ISR(xHigherPriorityTaskWoken);
+}
+
 /* Timer */
 static void repeating_timer_callback(void)
 {
@@ -227,151 +427,4 @@ static void repeating_timer_callback(void)
 static time_t millis(void)
 {
     return g_msec_cnt;
-}
-
-void *pvPortCalloc( size_t sNb, size_t sSize )
-{
-    void *vPtr = NULL;
-    if (sSize > 0) {
-        vPtr = pvPortMalloc(sSize * sNb); // Call FreeRTOS or other standard API
-        if(vPtr)
-           memset(vPtr, 0, (sSize * sNb)); // Must required
-    }
-    return vPtr;
-}
-void pvPortFree( void *vPtr )
-{
-    if (vPtr) {
-        vPortFree(vPtr); // Call FreeRTOS or other standard API
-    }
-}
-
-static void gpio_callback(void)
-{
-    signed portBASE_TYPE xHigherPriorityTaskWoken=pdFALSE;
-    xSemaphoreGiveFromISR(recv_sema, &xHigherPriorityTaskWoken);
-    portEND_SWITCHING_ISR( xHigherPriorityTaskWoken );
-}
-
-void tcp_task(void *argument)
-{
-    const int *list = NULL;
-    uint16_t len = 0;
-    int retval = 0;
-    uint32_t start_ms = 0;
-    uint32_t send_cnt = 0;
-
-    network_initialize(g_net_info);
-    /* Get network information */
-    print_network_information(g_net_info);
-
-    retval = wizchip_ssl_init(SOCKET_SSL);
-    if (retval < 0)
-    {
-        printf(" SSL initialize failed %d\n", retval);
-        while (1)
-        {
-            vTaskDelay(100000);
-        }
-    }
-
-    /* Get ciphersuite information */
-    printf(" Supported ciphersuite lists\n");
-    list = mbedtls_ssl_list_ciphersuites();
-    while (*list)
-    {
-        printf(" %-42s\n", mbedtls_ssl_get_ciphersuite_name(*list));
-        list++;
-        if (!*list)
-        {
-            break;
-        }
-        printf(" %s\n", mbedtls_ssl_get_ciphersuite_name(*list));
-        list++;
-    }
-
-    retval = socket((uint8_t)(g_ssl.p_bio), Sn_MR_TCP, PORT_SSL, SF_TCP_NODELAY);
-    if (retval != SOCKET_SSL)
-    {
-        printf(" Socket failed %d\n", retval);
-        while (1)
-        {
-            vTaskDelay(100000);
-        }
-    }
-
-    start_ms = millis();
-    do
-    {
-        retval = connect((uint8_t)(g_ssl.p_bio), g_ssl_target_ip, PORT_SSL);
-        if ((retval == SOCK_OK) || (retval == SOCKERR_TIMEOUT))
-        {
-            break;
-        }
-        vTaskDelay(1000);
-    } while ((millis() - start_ms) < RECV_TIMEOUT);
-    if ((retval != SOCK_OK) || (retval == SOCK_BUSY))
-    {
-        printf(" Connect failed %d\n", retval);
-        while (1)
-        {
-            vTaskDelay(100000);
-        }
-    }
-    printf(" Connected %d\n", retval);
-
-    while ((retval = mbedtls_ssl_handshake(&g_ssl)) != 0)
-    {
-        if ((retval != MBEDTLS_ERR_SSL_WANT_READ) && (retval != MBEDTLS_ERR_SSL_WANT_WRITE))
-        {
-            printf(" failed\n  ! mbedtls_ssl_handshake returned -0x%x\n", -retval);
-            while (1)
-            {
-                vTaskDelay(100000);
-            }
-        }
-    }
-    printf(" ok\n    [ Ciphersuite is %s ]\n", mbedtls_ssl_get_ciphersuite(&g_ssl));
-
-    while(1)
-    {
-        memset(g_send_buf, NULL, ETHERNET_BUF_MAX_SIZE);
-        sprintf(g_send_buf, "send data %d\r\n", send_cnt++);
-        retval = mbedtls_ssl_write(&g_ssl, g_send_buf, strlen(g_send_buf));
-        printf("send retval = %d\r\n", retval);
-        vTaskDelay(3000);
-    }
-}
-
-void recv_task(void *argument)
-{
-    uint16_t reg_val;
-    uint8_t socket_num;
-    uint16_t recv_len;
-
-    while(1)
-    {
-        xSemaphoreTake(recv_sema, portMAX_DELAY );
-        ctlwizchip(CW_GET_INTERRUPT, (void *)&reg_val);
-        reg_val &= 0x00FF;
-
-        for(socket_num = 0; socket_num < _WIZCHIP_SOCK_NUM_; socket_num++)
-        {
-            if (reg_val & (1 << socket_num))
-                break;
-        }
-
-        if (socket_num == SOCKET_SSL)
-        {
-            reg_val = (SIK_CONNECTED | SIK_DISCONNECTED | SIK_RECEIVED | SIK_TIMEOUT) & 0x00FF; //except sendok interrupt
-            ctlsocket(socket_num, CS_CLR_INTERRUPT, (void *)&reg_val);
-            getsockopt(socket_num, SO_RECVBUF, (void *)&recv_len);
- 
-            if (recv_len > 0)
-            {
-                mbedtls_ssl_read(&g_ssl, g_recv_buf, (uint16_t)recv_len);
-                printf("%s\r\n", g_recv_buf);
-            }
-        }
-    }
 }

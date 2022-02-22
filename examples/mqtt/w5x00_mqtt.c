@@ -137,6 +137,7 @@ int main()
 
     xTaskCreate(mqtt_task, "MQTT_Task", MQTT_TASK_STACK_SIZE, NULL, MQTT_TASK_PRIORITY, NULL);
     xTaskCreate(yield_task, "YIEDL_Task", YIELD_TASK_STACK_SIZE, NULL, YIELD_TASK_PRIORITY, NULL);
+
     vTaskStartScheduler();
 
     while (1)

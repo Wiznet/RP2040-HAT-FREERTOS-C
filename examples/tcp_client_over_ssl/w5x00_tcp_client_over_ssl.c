@@ -296,7 +296,7 @@ void recv_task(void *argument)
 
         if (socket_num == SOCKET_SSL)
         {
-            reg_val = (SIK_CONNECTED | SIK_DISCONNECTED | SIK_RECEIVED | SIK_TIMEOUT) & 0x00FF; // except sendok interrupt
+            reg_val = (SIK_CONNECTED | SIK_DISCONNECTED | SIK_RECEIVED | SIK_TIMEOUT) & 0x00FF; // except SIK_SENT(send OK) interrupt
 
             ctlsocket(socket_num, CS_CLR_INTERRUPT, (void *)&reg_val);
             getsockopt(socket_num, SO_RECVBUF, (void *)&recv_len);

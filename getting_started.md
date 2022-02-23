@@ -155,9 +155,7 @@ RP2040-HAT-FREERTOS-C
 
 If you want to change things related to SPI, such as the SPI port number and SPI read/write function, or GPIO port number and function related to interrupt or use a different MCU without using the RP2040, you need to change the code in the '**RP2040-HAT-FREERTOS-C/port/ioLibrary_Driver/**' directory. Here is information about functions.
 
-	- SPI
-
-```cpp
+ ```cpp
 /* W5x00 */
 /*! \brief Set CS pin
  *  \ingroup w5x00_spi
@@ -311,8 +309,6 @@ void network_initialize(wiz_NetInfo net_info);
  */
 void print_network_information(wiz_NetInfo net_info);
 ```
-
-	- GPIO
 
 ```cpp
 /* GPIO */

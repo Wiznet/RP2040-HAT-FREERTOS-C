@@ -33,10 +33,10 @@
  */
 /* Task */
 #define MQTT_TASK_STACK_SIZE 2048
-#define MQTT_TASK_PRIORITY 8
+#define MQTT_TASK_PRIORITY 10
 
 #define YIELD_TASK_STACK_SIZE 512
-#define YIELD_TASK_PRIORITY 10
+#define YIELD_TASK_PRIORITY 8
 
 /* Clock */
 #define PLL_SYS_KHZ (133 * 1000)
@@ -219,6 +219,7 @@ void mqtt_task(void *argument)
             vTaskDelay(1000 * 1000);
         }
     }
+
     printf(" Subscribed\n");
 
     g_mqtt_connect_flag = 1;
@@ -237,6 +238,7 @@ void mqtt_task(void *argument)
                 vTaskDelay(1000 * 1000);
             }
         }
+
         printf(" Published\n");
 
         vTaskDelay(MQTT_PUBLISH_PERIOD);

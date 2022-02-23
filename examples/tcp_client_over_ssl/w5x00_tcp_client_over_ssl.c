@@ -262,12 +262,22 @@ void tcp_task(void *argument)
 
     while (1)
     {
-        memset(g_send_buf, NULL, ETHERNET_BUF_MAX_SIZE);
-        sprintf(g_send_buf, "send data %d\r\n", send_cnt++);
+        memset(g_send_buf, 0, ETHERNET_BUF_MAX_SIZE);
+        sprintf(g_send_buf, " Send data : %d\n", send_cnt);
 
         retval = mbedtls_ssl_write(&g_ssl, g_send_buf, strlen(g_send_buf));
 
-        printf("send retval = %d\r\n", retval);
+        if (retval < 0)
+        {
+            printf(" failed\n  ! mbedtls_ssl_write returned -0x%x\n", -retval);
+
+            while (1)
+            {
+                vTaskDelay(1000 * 1000);
+            }
+        }
+
+        printf(" Send OK : %d\n", send_cnt++);
 
         vTaskDelay(1000 * 3);
     }
@@ -303,9 +313,11 @@ void recv_task(void *argument)
 
             if (recv_len > 0)
             {
+                memset(g_recv_buf, 0, ETHERNET_BUF_MAX_SIZE);
+
                 mbedtls_ssl_read(&g_ssl, g_recv_buf, (uint16_t)recv_len);
 
-                printf("%s\r\n", g_recv_buf);
+                printf("%s\n", g_recv_buf);
             }
         }
     }

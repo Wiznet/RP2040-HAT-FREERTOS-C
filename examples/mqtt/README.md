@@ -13,13 +13,13 @@ The following serial terminal program and MQTT broker are required for MQTT exam
 
 ## Step 2: Prepare hardware
 
-If you are using W5100S-EVB-Pico, you can skip '1. Combine...'
+If you are using W5100S-EVB-Pico or W5500-EVB-Pico, you can skip '1. Combine...'
 
 1. Combine WIZnet Ethernet HAT with Raspberry Pi Pico.
 
-2. Connect ethernet cable to WIZnet Ethernet HAT or W5100S-EVB-Pico ethernet port.
+2. Connect ethernet cable to WIZnet Ethernet HAT, W5100S-EVB-Pico or W5500-EVB-Pico ethernet port.
 
-3. Connect Raspberry Pi Pico or W5100S-EVB-Pico to desktop or laptop using 5 pin micro USB cable.
+3. Connect Raspberry Pi Pico, W5100S-EVB-Pico or W5500-EVB-Pico to desktop or laptop using 5 pin micro USB cable.
 
 
 
@@ -80,7 +80,7 @@ In the MQTT configuration, the broker IP is the IP of your desktop or laptop whe
 #define MQTT_PASSWORD "0123456789"
 #define MQTT_PUBLISH_TOPIC "publish_topic"
 #define MQTT_PUBLISH_PAYLOAD "Hello, World!"
-#define MQTT_PUBLISH_PERIOD (6000 * 10) // 60 seconds
+#define MQTT_PUBLISH_PERIOD (1000 * 60) // 60 seconds
 #define MQTT_SUBSCRIBE_TOPIC "subscribe_topic"
 #define MQTT_KEEP_ALIVE 10 // 10 milliseconds
 
@@ -99,13 +99,13 @@ static uint8_t g_mqtt_broker_ip[4] = {192, 168, 11, 3};
 
 ## Step 5: Upload and Run
 
-1. While pressing the BOOTSEL button of Raspberry Pi Pico or W5100S-EVB-Pico power on the board, the USB mass storage 'RPI-RP2' is automatically mounted.
+1. While pressing the BOOTSEL button of Raspberry Pi Pico, W5100S-EVB-Pico or W5500-EVB-Pico power on the board, the USB mass storage 'RPI-RP2' is automatically mounted.
 
 ![][link-raspberry_pi_pico_usb_mass_storage]
 
 2. Drag and drop 'w5x00_mqtt.uf2' onto the USB mass storage device 'RPI-RP2'.
 
-3. Connect to the serial COM port of Raspberry Pi Pico or W5100S-EVB-Pico that is open with Tera Term.
+3. Connect to the serial COM port of Raspberry Pi Pico, W5100S-EVB-Pico or W5500-EVB-Pico that is open with Tera Term.
 
 ![][link-connect_to_serial_com_port]
 
@@ -123,7 +123,7 @@ mosquitto -c mosquitto.conf -v
 
 6. Reset your board.
 
-7. If the MQTT example works normally on Raspberry Pi Pico or W5100S-EVB-Pico, you can see the network information of Raspberry Pi Pico or W5100S-EVB-Pico, connecting to the broker, subscribing to the subscribe topic and publishing the message.
+7. If the MQTT example works normally on Raspberry Pi Pico, W5100S-EVB-Pico or W5500-EVB-Pico, you can see the network information of Raspberry Pi Pico, W5100S-EVB-Pico or W5500-EVB-Pico, connecting to the broker, subscribing to the subscribe topic and publishing the message.
 
 ![][link-see_network_information_of_raspberry_pi_pico_connecting_to_broker_subscribing_to_subscribe_topic_and_publishing_message_1]
 

@@ -59,7 +59,7 @@
 #define MQTT_PASSWORD "0123456789"
 #define MQTT_PUBLISH_TOPIC "publish_topic"
 #define MQTT_PUBLISH_PAYLOAD "Hello, World!"
-#define MQTT_PUBLISH_PERIOD (6000 * 10) // 60 seconds
+#define MQTT_PUBLISH_PERIOD (1000 * 60) // 60 seconds
 #define MQTT_SUBSCRIBE_TOPIC "subscribe_topic"
 #define MQTT_KEEP_ALIVE 10 // 10 milliseconds
 

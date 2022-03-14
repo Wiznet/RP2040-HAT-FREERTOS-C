@@ -23,9 +23,8 @@ set(CMAKE_CXX_STANDARD 17)
 # Initialize the SDK
 pico_sdk_init()
 
-
+# Set ethernet chip
 set(WIZNET_CHIP W5100S)
-#set(WIZNET_CHIP W5500)
 
 if(${WIZNET_CHIP} STREQUAL W5100S)
     add_definitions(-D_WIZCHIP_=W5100S)
@@ -50,9 +49,9 @@ if(NOT DEFINED WIZNET_DIR)
     message(STATUS "WIZNET_DIR = ${WIZNET_DIR}")
 endif()
 
-if(NOT DEFINED MBEDTLS_DIR)
-    set(MBEDTLS_DIR ${CMAKE_SOURCE_DIR}/libraries/mbedtls)
-    message(STATUS "MBEDTLS_DIR = ${MBEDTLS_DIR}")
+if(NOT DEFINED MBEDTLS_LIB_DIR)
+    set(MBEDTLS_LIB_DIR ${CMAKE_SOURCE_DIR}/libraries/mbedtls)
+    message(STATUS "MBEDTLS_LIB_DIR = ${MBEDTLS_LIB_DIR}")
 endif()
 
 if(NOT DEFINED PORT_DIR)
@@ -72,7 +71,7 @@ add_subdirectory(examples)
 # Add libraries in subdirectories
 add_subdirectory(${CMAKE_SOURCE_DIR}/libraries)
 #add_subdirectory(${FREERTOS_DIR})
-add_subdirectory(${MBEDTLS_DIR})
+add_subdirectory(${MBEDTLS_LIB_DIR})
 add_subdirectory(${PORT_DIR})
 
 # Set compile options
@@ -82,4 +81,3 @@ add_compile_options(
         -Wno-unused-function # we have some for the docs that aren't called
         -Wno-maybe-uninitialized
         )
-        

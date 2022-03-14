@@ -70,18 +70,3 @@ if(EXISTS "${PICO_SDK_TINYUSB_SRC_DIR}/.git")
 endif()
 
 execute_process(COMMAND ${GIT_EXECUTABLE} -C ${PICO_SDK_SRC_DIR} submodule update --init)
-
-# ioLibrary_Driver patch
-message("submodules ioLibrary_Driver initialised")
-
-file(GLOB IOLIBRARY_DRIVER_PATCHES
-	"${RP2040_HAT_FREERTOS_C_PATCH_DIR}/01_iolibrary_driver_ethernet_chip.patch"
-	)
-
-foreach(IOLIBRARY_DRIVER_PATCH IN LISTS IOLIBRARY_DRIVER_PATCHES)
-	message("Running patch ${IOLIBRARY_DRIVER_PATCH}")
-	execute_process(
-		COMMAND ${GIT_EXECUTABLE} apply ${IOLIBRARY_DRIVER_PATCH}
-		WORKING_DIRECTORY ${IOLIBRARY_DRIVER_SRC_DIR}
-	)
-endforeach()

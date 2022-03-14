@@ -13,7 +13,7 @@ These sections will guide you through a series of steps from configuring develop
 <a name="development_environment_configuration"></a>
 ## Development environment configuration
 
-To test the FreeRTOS examples, the development environment must be configured to use Raspberry Pi Pico or W5100S-EVB-Pico.
+To test the FreeRTOS examples, the development environment must be configured to use Raspberry Pi Pico, W5100S-EVB-Pico or W5500-EVB-Pico.
 
 The FreeRTOS examples were tested by configuring the development environment for **Windows**. Please refer to the '**9.2. Building on MS Windows**' section of '**Getting started with Raspberry Pi Pico**' document below and configure accordingly.
 
@@ -26,7 +26,7 @@ The FreeRTOS examples were tested by configuring the development environment for
 <a name="hardware_requirements"></a>
 ## Hardware requirements
 
-The FreeRTOS examples use **Raspberry Pi Pico** and **WIZnet Ethernet HAT** - ethernet I/O module built on WIZnet's [**W5100S**][link-w5100s] ethernet chip or **W5100S-EVB-Pico** - ethernet I/O module built on [**RP2040**][link-rp2040] and WIZnet's [**W5100S**][link-w5100s] ethernet chip.
+The ethernet examples use **Raspberry Pi Pico** and **WIZnet Ethernet HAT** - ethernet I/O module built on WIZnet's [**W5100S**][link-w5100s] ethernet chip, **W5100S-EVB-Pico** - ethernet I/O module built on [**RP2040**][link-rp2040] and WIZnet's [**W5100S**][link-w5100s] ethernet chip or **W5500-EVB-Pico** - ethernet I/O module built on [**RP2040**][link-rp2040] and WIZnet's [**W5500**][link-w5500] ethernet chip.
 
 - [**Raspberry Pi Pico**][link-raspberry_pi_pico]
 
@@ -39,6 +39,8 @@ The FreeRTOS examples use **Raspberry Pi Pico** and **WIZnet Ethernet HAT** - et
 - [**W5100S-EVB-Pico**][link-w5100s-evb-pico]
 
 ![][link-w5100s-evb-pico_main]
+
+- **W5500-EVB-Pico**
 
 
 
@@ -99,22 +101,26 @@ git clone --recurse-submodules https://github.com/Wiznet/RP2040-HAT-FREERTOS-C.g
 
 With Visual Studio Code, the library set as a submodule is automatically downloaded, so it doesn't matter whether the library set as a submodule is an empty directory or not, so refer to it.
 
-2. Patch
+2. Setup ethetnet chip
 
-With Visual Studio Code, each library set as a submodule is automatically patched, but if you do not use Visual Studio Code, each library set as a submodule must be manually patched with the Git commands below in each library directory.
+Setup the ethernet chip in '**CMakeLists.txt**' in '**RP2040-HAT-FREERTOS-C/**' directory according to the evaluation board to be used referring to the following.
 
-- ioLibrary_Driver
+- WIZnet Ethernet HAT : W5100S
+- W5100S-EVB-Pico : W5100S
+- W5500-EVB-Pico : W5500
+
+For example, when using WIZnet Ethernet HAT or W5100S-EVB-Pico :
 
 ```cpp
-/* Change directory */
-// change to the 'ioLibrary_Driver' library directory
-cd [user path]/RP2040-HAT-FREERTOS-C/libraries/ioLibrary_Driver
+# Set ethernet chip
+set(WIZNET_CHIP W5100S)
+```
 
-// e.g.
-cd D:/RP2040/RP2040-HAT-FREERTOS-C/libraries/ioLibrary_Driver
+When using W5500-EVB-Pico :
 
-/* Patch */
-git apply ../../patches/01_iolibrary_driver_ethernet_chip.patch
+```cpp
+# Set ethernet chip
+set(WIZNET_CHIP W5500)
 ```
 
 3. Test
@@ -153,9 +159,9 @@ RP2040-HAT-FREERTOS-C
 
 - **ioLibrary_Driver**
 
-If you want to change things related to SPI, such as the SPI port number and SPI read/write function, or GPIO port number and function related to interrupt or use a different MCU without using the RP2040, you need to change the code in the '**RP2040-HAT-FREERTOS-C/port/ioLibrary_Driver/**' directory. Here is information about functions.
+If you want to change things related to **SPI**, such as the SPI port number and SPI read/write function, or GPIO port number and function related to **interrupt** or use a different MCU without using the RP2040, you need to change the code in the '**RP2040-HAT-FREERTOS-C/port/ioLibrary_Driver/**' directory. Here is information about functions.
 
- ```cpp
+```cpp
 /* W5x00 */
 /*! \brief Set CS pin
  *  \ingroup w5x00_spi
@@ -375,8 +381,9 @@ Link
 -->
 
 [link-getting_started_with_raspberry_pi_pico]: https://datasheets.raspberrypi.org/pico/getting-started-with-pico.pdf
-[link-w5100s]: https://docs.wiznet.io/Product/iEthernet/W5100S/overview
 [link-rp2040]: https://www.raspberrypi.org/products/rp2040/
+[link-w5100s]: https://docs.wiznet.io/Product/iEthernet/W5100S/overview
+[link-w5500]: https://docs.wiznet.io/Product/iEthernet/W5500/overview
 [link-raspberry_pi_pico]: https://www.raspberrypi.org/products/raspberry-pi-pico/
 [link-raspberry_pi_pico_main]: https://github.com/Wiznet/RP2040-HAT-FREERTOS-C/blob/main/static/images/getting_started/raspberry_pi_pico_main.png
 [link-wiznet_ethernet_hat]: https://docs.wiznet.io/Product/Open-Source-Hardware/wiznet_ethernet_hat

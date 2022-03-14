@@ -293,8 +293,11 @@ void recv_task(void *argument)
     {
         xSemaphoreTake(recv_sem, portMAX_DELAY);
         ctlwizchip(CW_GET_INTERRUPT, (void *)&reg_val);
-
+#if _WIZCHIP_ == W5100S
         reg_val &= 0x00FF;
+#elif _WIZCHIP_ == W5500
+        reg_val = (reg_val >> 8) & 0x00FF;
+#endif
 
         for (socket_num = 0; socket_num < _WIZCHIP_SOCK_NUM_; socket_num++)
         {

@@ -178,7 +178,7 @@ void dhcp_task(void *argument)
 
         if (link == PHY_LINK_OFF)
         {
-            printf("PHY_LINK_OFF\r\n");
+            printf("PHY_LINK_OFF\n");
 
             DHCP_stop();
 
@@ -256,7 +256,7 @@ void dns_task(void *argument)
         {
             if (DNS_run(g_net_info.dns, g_dns_target_domain, g_dns_target_ip) > 0)
             {
-                printf(" DNS success\r\n");
+                printf(" DNS success\n");
                 printf(" Target domain : %s\n", g_dns_target_domain);
                 printf(" IP of target domain : %d.%d.%d.%d\n", g_dns_target_ip[0], g_dns_target_ip[1], g_dns_target_ip[2], g_dns_target_ip[3]);
 
@@ -268,13 +268,13 @@ void dns_task(void *argument)
 
                 if (dns_retry <= DNS_RETRY_COUNT)
                 {
-                    printf(" DNS timeout occurred and retry %d\r\n", dns_retry);
+                    printf(" DNS timeout occurred and retry %d\n", dns_retry);
                 }
             }
 
             if (dns_retry > DNS_RETRY_COUNT)
             {
-                printf(" DNS failed\r\n");
+                printf(" DNS failed\n");
 
                 break;
             }

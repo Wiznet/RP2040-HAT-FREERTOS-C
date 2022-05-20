@@ -26,21 +26,23 @@ The FreeRTOS examples were tested by configuring the development environment for
 <a name="hardware_requirements"></a>
 ## Hardware requirements
 
-The ethernet examples use **Raspberry Pi Pico** and **WIZnet Ethernet HAT** - ethernet I/O module built on WIZnet's [**W5100S**][link-w5100s] ethernet chip, **W5100S-EVB-Pico** - ethernet I/O module built on [**RP2040**][link-rp2040] and WIZnet's [**W5100S**][link-w5100s] ethernet chip or **W5500-EVB-Pico** - ethernet I/O module built on [**RP2040**][link-rp2040] and WIZnet's [**W5500**][link-w5500] ethernet chip.
+The FreeRTOS examples use **Raspberry Pi Pico** and **WIZnet Ethernet HAT** - ethernet I/O module built on WIZnet's [**W5100S**][link-w5100s] ethernet chip, **W5100S-EVB-Pico** - ethernet I/O module built on [**RP2040**][link-rp2040] and WIZnet's [**W5100S**][link-w5100s] ethernet chip or **W5500-EVB-Pico** - ethernet I/O module built on [**RP2040**][link-rp2040] and WIZnet's [**W5500**][link-w5500] ethernet chip.
 
 - [**Raspberry Pi Pico**][link-raspberry_pi_pico]
 
-![][link-raspberry_pi_pico_main]
+<p align="center"><img src="https://github.com/Wiznet/RP2040-HAT-FREERTOS-C/blob/main/static/images/getting_started/raspberry_pi_pico_main.png"></p>
 
 - [**WIZnet Ethernet HAT**][link-wiznet_ethernet_hat]
 
-![][link-wiznet_ethernet_hat_main]
+<p align="center"><img src="https://github.com/Wiznet/RP2040-HAT-FREERTOS-C/blob/main/static/images/getting_started/wiznet_ethernet_hat_main.png"></p>
 
 - [**W5100S-EVB-Pico**][link-w5100s-evb-pico]
 
-![][link-w5100s-evb-pico_main]
+<p align="center"><img src="https://github.com/Wiznet/RP2040-HAT-FREERTOS-C/blob/main/static/images/getting_started/w5100s-evb-pico_main.png"></p>
 
-- **W5500-EVB-Pico**
+- [**W5500-EVB-Pico**][link-w5500-evb-pico]
+
+<p align="center"><img src="https://github.com/Wiznet/RP2040-HAT-FREERTOS-C/blob/main/static/images/getting_started/w5500-evb-pico_main.png"></p>
 
 
 
@@ -390,6 +392,8 @@ Link
 [link-wiznet_ethernet_hat_main]: https://github.com/Wiznet/RP2040-HAT-FREERTOS-C/blob/main/static/images/getting_started/wiznet_ethernet_hat_main.png
 [link-w5100s-evb-pico]: https://docs.wiznet.io/Product/iEthernet/W5100S/w5100s-evb-pico
 [link-w5100s-evb-pico_main]: https://github.com/Wiznet/RP2040-HAT-FREERTOS-C/blob/main/static/images/getting_started/w5100s-evb-pico_main.png
+[link-w5500-evb-pico]: https://docs.wiznet.io/Product/iEthernet/W5500/w5500-evb-pico
+[link-w5500-evb-pico_main]: https://github.com/Wiznet/RP2040-HAT-FREERTOS-C/blob/main/static/images/getting_started/w5500-evb-pico_main.png
 [link-dhcp_dns]: https://github.com/Wiznet/RP2040-HAT-FREERTOS-C/tree/main/examples/dhcp_dns
 [link-mqtt]: https://github.com/Wiznet/RP2040-HAT-FREERTOS-C/tree/main/examples/mqtt
 [link-tcp_client_over_ssl]: https://github.com/Wiznet/RP2040-HAT-FREERTOS-C/tree/main/examples/tcp_client_over_ssl

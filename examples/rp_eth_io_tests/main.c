@@ -130,7 +130,7 @@ int main()
         *(rp_eth_io_mac_addr + 0), *(rp_eth_io_mac_addr + 1), *(rp_eth_io_mac_addr + 2), *(rp_eth_io_mac_addr + 3), *(rp_eth_io_mac_addr + 4), *(rp_eth_io_mac_addr + 5));
 
     // ----- Peripehral Tests -----
-    // npn_output_test();
+    npn_output_test();
     // npn_input_test();
     // io_test();
     // adc_test();

@@ -1,0 +1,21 @@
+{
+    "files.associations": {
+        "*.env.development": "env",
+        "*.env.production": "env",
+        "functional": "c",
+        "adc.h": "c",
+        "w5x00_spi.h": "c",
+        "timer.h": "c",
+        "port_common.h": "c",
+        "stdlib.h": "c",
+        "rp_eth_io_pins.h": "c",
+        "rp_eth_io_adc.h": "c",
+        "tests.h": "c",
+        "rp_eth_io_init.h": "c",
+        "wizchip_conf.h": "c",
+        "stdint.h": "c",
+        "random": "c",
+        "rp_eth_io_common.h": "c"
+    },
+    "dotnet.defaultSolution": "disable"
+}

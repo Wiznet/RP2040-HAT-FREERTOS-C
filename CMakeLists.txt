@@ -24,7 +24,7 @@ set(CMAKE_CXX_STANDARD 17)
 pico_sdk_init()
 
 # Set ethernet chip
-set(WIZNET_CHIP W5100S)
+set(WIZNET_CHIP W5500)
 
 if(${WIZNET_CHIP} STREQUAL W5100S)
     add_definitions(-D_WIZCHIP_=W5100S)

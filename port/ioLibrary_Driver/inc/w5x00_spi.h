@@ -15,14 +15,14 @@
 /* SPI */
 #define SPI_PORT spi0
 
-#define PIN_SCK 18
-#define PIN_MOSI 19
-#define PIN_MISO 16
-#define PIN_CS 17
-#define PIN_RST 20
+#define PIN_SCK 2
+#define PIN_MOSI 3
+#define PIN_MISO 4
+#define PIN_CS 5
+#define PIN_RST 6
 
 /* Use SPI DMA */
-//#define USE_SPI_DMA // if you want to use SPI DMA, uncomment.
+// #define USE_SPI_DMA // if you want to use SPI DMA, uncomment.
 
 /**
  * ----------------------------------------------------------------------------------------------------

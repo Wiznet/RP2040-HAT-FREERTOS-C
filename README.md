@@ -1,9 +1,9 @@
-Please refer to [getting_started.md][link-getting_started] for examples usage.
+This repository is no longer maintained and has been archived.
 
-
+For the latest updates and ongoing development, please visit our new repository at [WIZnet-PICO-FREERTOS-C][link-wiznet-pico-freertos-c].
 
 <!--
 Link
 -->
 
-[link-getting_started]: https://github.com/Wiznet/RP2040-HAT-FREERTOS-C/blob/main/getting_started.md
+[link-wiznet-pico-freertos-c]: https://github.com/WIZnet-ioNIC/WIZnet-PICO-FREERTOS-C
